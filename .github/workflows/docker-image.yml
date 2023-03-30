@@ -16,7 +16,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Start Docker Compose
       run: docker-compose up -d 
-    - name: Start Docker Compose
+    - name: Start test execution
       run: docker-compose exec exo_devops_php php test.php 
     - name: Add table to database
       run: docker exec exo_devops_mariadb sh -c 'exec mysql -uroot -proot exo_devops -e "CREATE TABLE users (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)"'
