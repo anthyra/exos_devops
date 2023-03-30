@@ -47,4 +47,4 @@ jobs:
     - name: Wait for nginx container to start
       run: docker exec exo_devops_nginx sh -c 'while ! nc -z localhost 80; do sleep 1; done;'
     - name: Wait for php-fpm container to start
-      run: docker exec exo_devops_php sh -c 'while ! nc -z localhost 9000; do sleep 1; done;'
+      run: docker exec exo_devops_php sh -c 'while ! nc -z localhost 9000; do sleep 1; done;' 
