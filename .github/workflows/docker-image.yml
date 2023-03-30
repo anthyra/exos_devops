@@ -14,14 +14,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Start Docker Compose
-      run: docker-compose up -d 
-    - name: Start test execution
-      run: docker exec exo_devops_php php test.php 
-    - name: Add table to database
-      env:
-        MYSQL_ROOT_PASSWORD: root
-      run: docker exec -e MYSQL_ROOT_PASSWORD=root exo_devops_mariadb sh -c 'exec mysql -uroot -proot exo_devops -e "CREATE TABLE users (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)"'
-    - name: Add user to table
-      run: docker exec exo_devops_mariadb sh -c "INSERT INTO users (name) VALUES ('John')"
+      - uses: actions/checkout@v3
+      - name: Start Docker Compose
+        run: docker-compose up -d 
+        # Add a delay of 10 seconds to give MySQL more time to start up
+        # before running the next steps
+        # You can adjust the duration of the delay as needed
+        # For example, 30 seconds would be sleep 30
+      - name: Wait for MySQL to start up
+        run: sleep 10
+      - name: Start test execution
+        run: docker exec exo_devops_php php test.php 
+      - name: Add table to database
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        run: docker exec -e MYSQL_ROOT_PASSWORD=root exo_devops_mariadb sh -c 'exec mysql -uroot -proot exo_devops -e "CREATE TABLE users (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)"'
+      - name: Add user to table
