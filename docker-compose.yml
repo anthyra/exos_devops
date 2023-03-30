@@ -34,8 +34,6 @@ services:
     restart: on-failure
     environment:
       - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_USER=your_username
-      - MYSQL_PASSWORD=your_password
       - MYSQL_DATABASE=exo_devops
     ports:
       - "3306:3306"
