@@ -1,39 +1,39 @@
 version: '3.7'
 
-# Définir les services
+# Define the services
 services:
-  # Définir le nom d'un service (pas nécéssaire)
+  # Define the name of a service (not necessary)
   nginx:
-    # Expliquer ce que je veux dans le container
+    # Explain what I want in the container
     container_name: exo_devops_nginx
-    # image = image publique d'un service (php, mysql ect) préconfiguré
-    # build = création d'une image personnalisée
+    # image = public image of a pre-configured service (php, mysql, etc.)
+    # build = creation of a custom image
     build: docker/nginx
-    # volumes = liaison de fichiers entre mon image et mon projet local
+    # volumes = link files between my image and my local project
     volumes:
-      # ./ = tout les fichiers de mon dossier actuel
-      # :/ect = ou je veux le mettre dans mon build docker/nginx
+      # ./ = all files in my current folder
+      # :/ect = where I want to put it in my docker/nginx build
       - ./app/:/var/www/html/
-      # Récupération du fichier de configuration de mon serveur et copie dans le serveur docker
+      # Retrieve the configuration file of my server and copy it into the docker server
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
-      # Routing du nom de domaine local (127.0.0.0 en nomdusite.localhost)
+      # Routing of the local domain name (127.0.0.0 to sitename.localhost)
       - ./docker/nginx/sites/:/etc/nginx/sites-available
-      # Configuration de php avec Nginx
+      # Configure php with Nginx
       - ./docker/nginx/conf.d/:/etc/nginx/conf.d
-      # récupération des logs du serveur local
+      # Retrieve logs from the local server
       - ./docker/logs:/var/log
     depends_on:
-      # Utilisation du service PHP qu'on va créer
+      # Use the PHP service we're going to create
       - php-fpm
     ports:
-      # Utilisation des mêmes ports que docker
+      # Expose port 80 of the container to port 80 on the host
       - '80:80'
 
   php-fpm:
     container_name: exo_devops_php
     build: docker/php-fpm
     volumes:
-      # Quand je vais executer des commandes php (composer) il va les appliquer ici
+      # When I execute php commands (composer) it will apply them here
       - ./app/:/var/www/html/
       - ./docker/php-fpm/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     tty: true
@@ -45,3 +45,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: exo_devops
+    ports:
+      # Expose port 3306 of the container to port 3306 on the host
+      - '3306:3306'
