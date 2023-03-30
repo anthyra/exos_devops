@@ -14,8 +14,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Start Docker Compose
-      run: docker-compose up -d 
+    - name: Stop and remove existing containers
+      run: |
+        docker-compose down
+        docker rm exo_devops_mariadb
+    - name: Recreate containers
+      run: docker-compose up -d
     - name: Start test execution
       run: docker exec exo_devops_php php test.php 
     - name: Debugging MySQL
