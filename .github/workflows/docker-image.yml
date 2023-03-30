@@ -19,6 +19,8 @@ jobs:
     - name: Start test execution
       run: docker exec exo_devops_php php test.php 
     - name: Add table to database
-      run: docker exec exo_devops_mariadb sh -c 'exec mysql -uroot -proot exo_devops -e "CREATE TABLE users (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)"'
+      env:
+        MYSQL_ROOT_PASSWORD: root
+      run: docker exec exo_devops_mariadb sh -c 'exec mysql -uroot -p${MYSQL_ROOT_PASSWORD} exo_devops -e "CREATE TABLE users (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)"'
     - name: Add user to table
       run: docker exec exo_devops_mariadb sh -c "INSERT INTO users (name) VALUES ('John')"
