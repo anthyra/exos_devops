@@ -1,4 +1,5 @@
-name: Docker Compose CI
+
+name: Docker Image CI
 
 on:
   push:
@@ -13,40 +14,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Stop and Remove mariadb container
-      run: |
-        docker-compose down
-        docker container rm exo_devops_mariadb
-      continue-on-error: true
-    - name: Recreate mariadb container
-      run: docker-compose up -d mariadb
-    - name: Wait for mariadb container to start
-      run: docker exec exo_devops_mariadb sh -c 'while ! mysqladmin ping -hlocalhost --silent; do sleep 1; done;'
-      env:
-        MYSQL_ROOT_PASSWORD: root
-    - name: Debugging MySQL
-      run: |
-        docker exec exo_devops_mariadb sh -c 'ls -la /var/run/mysqld'
-        docker exec exo_devops_mariadb sh -c 'ls -la /run/mysqld'
-        docker exec exo_devops_mariadb sh -c 'ls -la /var/lib/mysql'
-      env:
-        MYSQL_ROOT_PASSWORD: root
-    - name: Grant privileges to root
-      run: docker exec -e MYSQL_ROOT_PASSWORD=root exo_devops_mariadb sh -c 'exec mysql -uroot -proot -e "GRANT ALL PRIVILEGES ON *.* TO '\''root'\''@'\''localhost'\'' WITH GRANT OPTION; FLUSH PRIVILEGES;"'
+    - uses: actions/checkout@v3
+    - name: Start Docker Compose
+      run: docker-compose up -d 
+    - name: Start test execution
+      run: docker exec exo_devops_php php test.php 
     - name: Add table to database
+      env:
+        MYSQL_ROOT_PASSWORD: root
       run: docker exec -e MYSQL_ROOT_PASSWORD=root exo_devops_mariadb sh -c 'exec mysql -uroot -proot exo_devops -e "CREATE TABLE users (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)"'
     - name: Add user to table
       run: docker exec exo_devops_mariadb sh -c "INSERT INTO users (name) VALUES ('John')"
-    - name: Stop and Remove nginx and php-fpm containers
-      run: |
-        docker-compose down
-        docker container rm exo_devops_nginx
-        docker container rm exo_devops_php
-      continue-on-error: true
-    - name: Recreate nginx and php-fpm containers
-      run: docker-compose up -d nginx php-fpm
-    - name: Wait for nginx container to start
-      run: docker exec exo_devops_nginx sh -c 'while ! nc -z localhost 80; do sleep 1; done;'
-    - name: Wait for php-fpm container to start
-      run: docker exec exo_devops_php sh -c 'while ! nc -z localhost 9000; do sleep 1; done;'
