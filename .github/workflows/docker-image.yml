@@ -14,23 +14,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Stop and Remove Container and Network if exist
+    - name: Stop and Remove mariadb container
       run: |
-        if [[ $(docker ps -q --filter "name=exo_devops_mariadb") ]]; then
-          docker-compose down
-        fi
-        if [[ $(docker network ls -q --filter "name=exos_devops_default") ]]; then
-          docker network rm exos_devops_default
-        fi
+        docker-compose down
+        docker container rm exo_devops_mariadb
+      continue-on-error: true
+    - name: Recreate mariadb container
+      run: docker-compose up -d
+    - name: Wait for mariadb container to start
+      run: docker exec exo_devops_mariadb sh -c 'while ! mysqladmin ping -hlocalhost --silent; do sleep 1; done;'
       env:
         MYSQL_ROOT_PASSWORD: root
-    - name: Recreate Container and Network
-      run: |
-        docker-compose up -d
-      env:
-        MYSQL_ROOT_PASSWORD: root
-    - name: Start test execution
-      run: docker exec exo_devops_php php test.php 
     - name: Debugging MySQL
       run: |
         docker exec exo_devops_mariadb sh -c 'ls -la /var/run/mysqld'
