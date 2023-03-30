@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Docker Compose CI
 
 on:
   push:
@@ -7,45 +7,44 @@ on:
     branches: [ "main" ]
 
 jobs:
+
   build-and-run:
+
     runs-on: ubuntu-latest
 
-    services:
-      mariadb:
-        image: mariadb:latest
-        env:
-          MYSQL_ROOT_PASSWORD: root
-        ports:
-          - 3306/tcp
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Build the Docker image
-        run: docker build -t myapp:${{ github.sha }} .
-
-      - name: Stop and remove old container
-        run: |
-          docker stop myapp || true
-          docker rm myapp || true
-
-      - name: Run the Docker container
-        run: docker run -d --name myapp -p 8080:80 myapp:${{ github.sha }}
-
-      - name: Wait for application to start
-        run: |
-          while [[ "$(curl --write-out "%{http_code}" --silent --output /dev/null localhost:8080)" != "200" ]]; do sleep 5; done
-
-      - name: Create a database
-        run: |
-          docker exec -it mariadb mysql -uroot -proot -e "CREATE DATABASE mydb"
-
-      - name: Create a table
-        run: |
-          docker exec -it mariadb mysql -uroot -proot mydb -e "CREATE TABLE users (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)"
-
-      - name: Add user to table
-        run: |
-          docker exec -it mariadb mysql -uroot -proot mydb -e "INSERT INTO users (name) VALUES ('John')"
+    - uses: actions/checkout@v2
+    - name: Stop and Remove mariadb container
+      run: |
+        docker-compose down
+        docker container rm exo_devops_mariadb
+      continue-on-error: true
+    - name: Recreate mariadb container
+      run: docker-compose up -d mariadb
+    - name: Wait for mariadb container to start
+      run: docker exec exo_devops_mariadb sh -c 'while ! mysqladmin ping -hlocalhost --silent; do sleep 1; done;'
+      env:
+        MYSQL_ROOT_PASSWORD: root
+    - name: Debugging MySQL
+      run: |
+        docker exec exo_devops_mariadb sh -c 'ls -la /var/run/mysqld'
+        docker exec exo_devops_mariadb sh -c 'ls -la /run/mysqld'
+        docker exec exo_devops_mariadb sh -c 'ls -la /var/lib/mysql'
+      env:
+        MYSQL_ROOT_PASSWORD: root
+    - name: Add table to database
+      run: docker exec exo_devops_mariadb sh -c 'exec mysql -uroot -proot exo_devops -e "CREATE TABLE users (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)"'
+    - name: Add user to table
+      run: docker exec exo_devops_mariadb sh -c "INSERT INTO users (name) VALUES ('John')"
+    - name: Stop and Remove nginx and php-fpm containers
+      run: |
+        docker-compose down
+        docker container rm exo_devops_nginx
+        docker container rm exo_devops_php
+      continue-on-error: true
+    - name: Recreate nginx and php-fpm containers
+      run: docker-compose up -d nginx php-fpm
+    - name: Wait for nginx container to start
+      run: docker exec exo_devops_nginx sh -c 'while ! nc -z localhost 80; do sleep 1; done;'
+    - name: Wait for php-fpm container to start
+      run: docker exec exo_devops_php sh -c 'while ! nc -z localhost 9000; do sleep 1; done;'
