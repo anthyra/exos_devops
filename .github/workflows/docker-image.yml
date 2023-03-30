@@ -30,12 +30,11 @@ jobs:
         docker exec exo_devops_mariadb sh -c 'ls -la /var/run/mysqld'
         docker exec exo_devops_mariadb sh -c 'ls -la /run/mysqld'
         docker exec exo_devops_mariadb sh -c 'ls -la /var/lib/mysql'
-
     - name: Add table to database
-      run: docker exec exo_devops_mariadb sh -c 'mysql -uroot -p"root" exo_devops -e "CREATE TABLE users (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)"'
+      run: docker exec exo_devops_mariadb sh -c 'mysql -h localhost -uroot -p"root" exo_devops -e "CREATE TABLE users (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)"'
 
     - name: Add user to table
-      run: docker exec exo_devops_mariadb sh -c "mysql -uroot -p"root" exo_devops -e 'INSERT INTO users (name) VALUES ('\''John'\'')'"
+      run: docker exec exo_devops_mariadb sh -c "mysql -h localhost -uroot -p'root' exo_devops -e 'INSERT INTO users (name) VALUES (\"John\")'"
 
     - name: Stop and Remove nginx and php-fpm containers
       run: |
