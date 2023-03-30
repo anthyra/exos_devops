@@ -1,0 +1,47 @@
+version: '3.7'
+
+# Définir les services
+services:
+  # Définir le nom d'un service (pas nécéssaire)
+  nginx:
+    # Expliquer ce que je veux dans le container
+    container_name: exo_devops_nginx
+    # image = image publique d'un service (php, mysql ect) préconfiguré
+    # build = création d'une image personnalisée
+    build: docker/nginx
+    # volumes = liaison de fichiers entre mon image et mon projet local
+    volumes:
+      # ./ = tout les fichiers de mon dossier actuel
+      # :/ect = ou je veux le mettre dans mon build docker/nginx
+      - ./app/:/var/www/html/
+      # Récupération du fichier de configuration de mon serveur et copie dans le serveur docker
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      # Routing du nom de domaine local (127.0.0.0 en nomdusite.localhost)
+      - ./docker/nginx/sites/:/etc/nginx/sites-available
+      # Configuration de php avec Nginx
+      - ./docker/nginx/conf.d/:/etc/nginx/conf.d
+      # récupération des logs du serveur local
+      - ./docker/logs:/var/log
+    depends_on:
+      # Utilisation du service PHP qu'on va créer
+      - php-fpm
+    ports:
+      # Utilisation des mêmes ports que docker
+      - '80:80'
+
+  php-fpm:
+    container_name: exo_devops_php
+    build: docker/php-fpm
+    volumes:
+      # Quand je vais executer des commandes php (composer) il va les appliquer ici
+      - ./app/:/var/www/html/
+      - ./docker/php-fpm/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+    tty: true
+
+  mariadb:
+    container_name: exo_devops_mariadb
+    image: mariadb:10.7
+    restart: on-failure
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: exo_devops
