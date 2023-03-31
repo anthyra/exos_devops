@@ -1,7 +1,4 @@
 <?php
-
-include './connect.php';
-
 try {
     $dsn = "mysql:host=mariadb;dbname=exo_devops;charset=utf8mb4";
     $username = "root";
