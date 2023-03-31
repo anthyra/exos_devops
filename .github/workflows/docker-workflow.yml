@@ -11,8 +11,6 @@ jobs:
   build-and-run:
 
     runs-on: ubuntu-latest
-    env:
-      MYSQL_ROOT_PASSWORD: root
 
     steps:
       - uses: actions/checkout@v2

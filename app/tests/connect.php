@@ -1,11 +1,11 @@
 <?php
 
-include 'connect.php';
+include './connect.php';
 
 try {
     $dsn = "mysql:host=mariadb;dbname=exo_devops;charset=utf8mb4";
     $username = "root";
-    $password = getenv('MYSQL_ROOT_PASSWORD');
+    $password = "root";
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
