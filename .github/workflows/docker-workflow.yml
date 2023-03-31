@@ -12,41 +12,41 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-     MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: root
     steps:
-    - uses: actions/checkout@v2
-    - name: Stop and Remove mariadb container
-      run: |
-        docker-compose down
-        docker container rm exo_devops_mariadb
-      continue-on-error: true
-    - name: Recreate mariadb container
-      run: docker-compose up -d mariadb
-    - name: Wait for mariadb container to start
-      run: docker exec exo_devops_mariadb sh -c 'while ! mysqladmin ping -hlocalhost --silent; do sleep 1; done;'
-    - name: Check password
-      run: echo $MYSQL_ROOT_PASSWORD
-    - name: Print environment variables
-      run: |
-       echo "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD"
-       env
-    - name: Ping mysql
-      run: docker exec exo_devops_mariadb sh -c 'mysqladmin ping -hlocalhost --silent'
-    - name: Run tests
-      run: docker-compose run --rm php-fpm sh -c 'cd /var/www/html && vendor/bin/phpunit'
-    - name: Add table to database
-      run: docker exec exo_devops_mariadb sh -c 'mysql -h localhost -uroot -p"$MYSQL_ROOT_PASSWORD" exo_devops -e "CREATE TABLE users (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)"'
-    - name: Add user to table
-      run: docker exec exo_devops_mariadb sh -c "mysql -h localhost -uroot -p'$MYSQL_ROOT_PASSWORD' exo_devops -e 'INSERT INTO users (name) VALUES (\"John\")'"
-    - name: Stop and Remove nginx and php-fpm containers
-      run: |
-        docker-compose down
-        docker container rm exo_devops_nginx
-        docker container rm exo_devops_php
-      continue-on-error: true
-    - name: Recreate nginx and php-fpm containers
-      run: docker-compose up -d nginx php-fpm
-    - name: Wait for nginx container to start
-      run: docker exec exo_devops_nginx sh -c 'while ! nc -z localhost 80; do sleep 1; done;'
-    - name: Wait for php-fpm container to start
-      run: docker exec exo_devops_php sh -c 'while ! nc -z localhost 9000; do sleep 1; done;'
+      - uses: actions/checkout@v2
+      - name: Stop and Remove mariadb container
+        run: |
+          docker-compose down
+          docker container rm exo_devops_mariadb
+        continue-on-error: true
+      - name: Recreate mariadb container
+        run: docker-compose up -d mariadb
+      - name: Wait for mariadb container to start
+        run: docker exec exo_devops_mariadb sh -c 'while ! mysqladmin ping -hlocalhost --silent; do sleep 1; done;'
+      - name: Check password
+        run: echo $MYSQL_ROOT_PASSWORD
+      - name: Print environment variables
+        run: |
+          echo "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD"
+          env
+      - name: Ping mysql
+        run: docker exec exo_devops_mariadb sh -c 'mysqladmin ping -hlocalhost --silent'
+      - name: Create table in database
+        run: |
+          docker exec exo_devops_mariadb sh -c "mysql -h localhost -uroot -p'$MYSQL_ROOT_PASSWORD' exo_devops -e 'CREATE TABLE IF NOT EXISTS users (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)'"
+      - name: Check table existence
+        run: |
+          docker exec exo_devops_mariadb sh -c "mysql -h localhost -uroot -p'$MYSQL_ROOT_PASSWORD' exo_devops -e 'SHOW TABLES LIKE \"users\"'"
+      - name: Stop and Remove nginx and php-fpm containers
+        run: |
+          docker-compose down
+          docker container rm exo_devops_nginx
+          docker container rm exo_devops_php
+        continue-on-error: true
+      - name: Recreate nginx and php-fpm containers
+        run: docker-compose up -d nginx php-fpm
+      - name: Wait for nginx container to start
+        run: docker exec exo_devops_nginx sh -c 'while ! nc -z localhost 80; do sleep 1; done;'
+      - name: Wait for php-fpm container to start
+        run: docker exec exo_devops_php sh -c 'while ! nc -z localhost 9000; do sleep 1; done;'
