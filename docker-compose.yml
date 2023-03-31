@@ -14,6 +14,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
+
   php-fpm:
     container_name: exo_devops_php
     build: docker/php-fpm
@@ -24,6 +25,7 @@ services:
       - APP_ENV=local
       - APP_DEBUG=true
       - APP_URL=http://localhost
+
   mariadb:
     container_name: exo_devops_mariadb
     image: mariadb:10.7
@@ -32,4 +34,4 @@ services:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_DATABASE=exo_devops
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
