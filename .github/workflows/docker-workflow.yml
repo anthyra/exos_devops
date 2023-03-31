@@ -15,13 +15,17 @@ jobs:
       MYSQL_ROOT_PASSWORD: root
     steps:
       - uses: actions/checkout@v2
+      - name: Create network
+        run: docker network create exo_devops_network
       - name: Stop and Remove mariadb container
         run: |
           docker-compose down
           docker container rm exo_devops_mariadb
         continue-on-error: true
       - name: Recreate mariadb container
-        run: docker-compose up -d mariadb
+        run: |
+          docker-compose up -d --force-recreate --remove-orphans mariadb
+        continue-on-error: true
       - name: Wait for mariadb container to start
         run: docker exec exo_devops_mariadb sh -c 'while ! mysqladmin ping -hlocalhost --silent; do sleep 1; done;'
       - name: Check password
@@ -34,6 +38,8 @@ jobs:
         run: docker exec exo_devops_mariadb sh -c 'mysqladmin ping -hlocalhost --silent'
       - name: Verify containers are running
         run: docker ps
+      - name: Log into MariaDB container
+        run: docker exec exo_devops_mariadb mysql -u root -proot
       - name: Create table in database
         run: |
           docker exec exo_devops_mariadb sh -c "mysql -h localhost -uroot -p'$MYSQL_ROOT_PASSWORD' exo_devops -e 'CREATE TABLE IF NOT EXISTS users (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)'"
@@ -44,7 +50,7 @@ jobs:
           docker container rm exo_devops_php
         continue-on-error: true
       - name: Recreate nginx and php-fpm containers
-        run: docker-compose up -d nginx php-fpm
+        run: docker-compose up -d --force-recreate --remove-orphans nginx php-fpm
       - name: Wait for nginx container to start
         run: docker exec exo_devops_nginx sh -c 'while ! nc -z localhost 80; do sleep 1; done;'
       - name: Wait for php-fpm container to start
