@@ -26,6 +26,10 @@ jobs:
       run: docker exec exo_devops_mariadb sh -c 'while ! mysqladmin ping -hlocalhost --silent; do sleep 1; done;'
     - name: Check password
       run: echo $MYSQL_ROOT_PASSWORD
+    - name: Print environment variables
+      run: |
+       echo "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD"
+       env
     - name: Add table to database
       run: docker exec exo_devops_mariadb sh -c 'mysql -h localhost -uroot -p"$MYSQL_ROOT_PASSWORD" exo_devops -e "CREATE TABLE users (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)"'
     - name: Add user to table
