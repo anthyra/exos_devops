@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MYSQL_ROOT_PASSWORD: root
+
     steps:
       - uses: actions/checkout@v2
       - name: Build docker composer
