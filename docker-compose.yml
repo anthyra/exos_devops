@@ -14,6 +14,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    networks:
+      - exo_devops_network
 
   php-fpm:
     container_name: exo_devops_php
@@ -25,6 +27,8 @@ services:
       - APP_ENV=local
       - APP_DEBUG=true
       - APP_URL=http://localhost
+    networks:
+      - exo_devops_network
 
   mariadb:
     container_name: exo_devops_mariadb
@@ -35,3 +39,9 @@ services:
       - MYSQL_DATABASE=exo_devops
     ports:
       - "127.0.0.1:3306:3306"
+    networks:
+      - exo_devops_network
+
+networks:
+  exo_devops_network:
+    driver: bridge
