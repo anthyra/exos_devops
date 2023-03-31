@@ -5,18 +5,12 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends git
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends libssl-dev libzip-dev curl git unzip && \
-    pecl install apcu && \
-    docker-php-ext-install -j$(nproc) zip opcache pdo_mysql && \
-    docker-php-ext-enable apcu sodium && \
+    apt-get install -y --no-install-recommends libssl-dev libzip-dev git && \
+    docker-php-ext-install -j$(nproc) opcache pdo_mysql && \
     rm -rf /tmp/* /var/tmp/*
-
-RUN docker-php-ext-install mysqli && docker-php-ext-enable mysqli
-
-COPY --from=composer /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-CMD composer -V ; php-fpm
+CMD php-fpm
 
 EXPOSE 9000
