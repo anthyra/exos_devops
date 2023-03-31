@@ -17,3 +17,5 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build docker composer
         run: docker compose up -d
+      - name: Start test.php
+        run: docker exec exo_devops_php php test.php
