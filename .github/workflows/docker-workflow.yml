@@ -17,8 +17,8 @@ jobs:
       - name: Build docker composer
         run: docker compose up -d
       - name: Start test Title
-        run: docker exec exo_devops_php php tests/title.php
+        run: docker exec exo_devops_php php tests/test_title.php
       - name: Wait 30 seconds
         run: sleep 30
       - name: Start test connect
-        run: docker exec exo_devops_php php tests/connect.php
+        run: docker exec exo_devops_php php tests/test_connect.php
