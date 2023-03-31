@@ -25,11 +25,9 @@ jobs:
       run: docker exec exo_devops_mariadb sh -c 'while ! mysqladmin ping -hlocalhost --silent; do sleep 1; done;'
       env:
         MYSQL_ROOT_PASSWORD: root
-    - name: Debugging MySQL
+    - name: Grant permissions to root user
       run: |
-        docker exec exo_devops_mariadb sh -c 'ls -la /var/run/mysqld'
-        docker exec exo_devops_mariadb sh -c 'ls -la /run/mysqld'
-        docker exec exo_devops_mariadb sh -c 'ls -la /var/lib/mysql'
+        docker exec exo_devops_mariadb sh -c 'mysql -h localhost -uroot -p"root" -e "GRANT ALL PRIVILEGES ON exo_devops.* TO 'root'@'localhost'"'
     - name: Add table to database
       run: docker exec exo_devops_mariadb sh -c 'mysql -h localhost -uroot -p"root" exo_devops -e "CREATE TABLE users (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)"'
 
