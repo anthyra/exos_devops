@@ -1,39 +1,48 @@
-version: '3.7'
+name: Docker Compose CI
 
-services:
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
-  nginx:
-    container_name: exo_devops_nginx
-    build: docker/nginx
-    volumes:
-      - ./app/:/var/www/html/
-      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./docker/nginx/sites/:/etc/nginx/sites-available
-      - ./docker/nginx/conf.d/:/etc/nginx/conf.d
-      - ./docker/logs:/var/log
-    depends_on:
-      - php-fpm
-    ports:
-      - "80:80"
-      - "443:443"
+jobs:
 
-  php-fpm:
-    container_name: exo_devops_php
-    build: docker/php-fpm
-    volumes:
-      - ./app/:/var/www/html/
-      - ./docker/php-fpm/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-      - APP_URL=http://localhost
+  build-and-run:
 
-  mariadb:
-    container_name: exo_devops_mariadb
-    image: mariadb:10.7
-    restart: on-failure
-    environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=exo_devops
-    ports:
-      - "3306:3306"
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Stop and Remove mariadb container
+      run: |
+        docker-compose down
+        docker container rm exo_devops_mariadb
+      continue-on-error: true
+    - name: Recreate mariadb container
+      run: docker-compose up -d mariadb
+    - name: Wait for mariadb container to start
+      run: docker exec exo_devops_mariadb sh -c 'while ! mysqladmin ping -hlocalhost --silent; do sleep 1; done;'
+      env:
+        MYSQL_ROOT_PASSWORD: root
+    - name: Grant permissions to root user
+      run: |
+        docker exec exo_devops_mariadb sh -c 'mysql -h localhost -uroot -p"root" -e "GRANT ALL PRIVILEGES ON exo_devops.* TO 'root'@'localhost'"'
+    - name: Add table to database
+      run: docker exec exo_devops_mariadb sh -c 'mysql -h localhost -uroot -p"root" exo_devops -e "CREATE TABLE users (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)"'
+
+    - name: Add user to table
+      run: docker exec exo_devops_mariadb sh -c "mysql -h localhost -uroot -p'root' exo_devops -e 'INSERT INTO users (name) VALUES (\"John\")'"
+
+    - name: Stop and Remove nginx and php-fpm containers
+      run: |
+        docker-compose down
+        docker container rm exo_devops_nginx
+        docker container rm exo_devops_php
+      continue-on-error: true
+    - name: Recreate nginx and php-fpm containers
+      run: docker-compose up -d nginx php-fpm
+    - name: Wait for nginx container to start
+      run: docker exec exo_devops_nginx sh -c 'while ! nc -z localhost 80; do sleep 1; done;'
+    - name: Wait for php-fpm container to start
+      run: docker exec exo_devops_php sh -c 'while ! nc -z localhost 9000; do sleep 1; done;'
