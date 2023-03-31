@@ -32,12 +32,11 @@ jobs:
           env
       - name: Ping mysql
         run: docker exec exo_devops_mariadb sh -c 'mysqladmin ping -hlocalhost --silent'
+      - name: Verify containers are running
+        run: docker ps
       - name: Create table in database
         run: |
           docker exec exo_devops_mariadb sh -c "mysql -h localhost -uroot -p'$MYSQL_ROOT_PASSWORD' exo_devops -e 'CREATE TABLE IF NOT EXISTS users (id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30) NOT NULL)'"
-      - name: Check table existence
-        run: |
-          docker exec exo_devops_mariadb sh -c "mysql -h localhost -uroot -p'$MYSQL_ROOT_PASSWORD' exo_devops -e 'SHOW TABLES LIKE \"users\"'"
       - name: Stop and Remove nginx and php-fpm containers
         run: |
           docker-compose down
